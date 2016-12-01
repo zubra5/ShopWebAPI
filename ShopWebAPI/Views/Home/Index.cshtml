@@ -1,0 +1,111 @@
+﻿<div class="row">
+    <div class="col-lg-2">
+        <div class="userInfo" style="display:none;">
+            <h3>You are here!</h3>         
+            <input type="button" value="Log out" id="logOut" />
+        </div>
+        <div class="loginForm">
+            <h3>Log in</h3>
+            <label>your email</label><br />
+            <input type="email" id="emailLogin" /> <br /><br />
+            <label>your password</label><br />
+            <input type="password" id="passwordLogin" /><br /><br />
+            <input type="submit" id="submitLogin" value="Log in" />
+        </div>
+    </div>
+    <div class="col-lg-2">
+        <div class="registerFrom">
+            <h3>Register</h3>
+            <label>Input email</label><br />
+            <input type="email" id="email" /> <br /><br />
+            <label>Input password</label><br />
+            <input type="password" id="password" /><br /><br />
+            <label>Confirm password</label><br />
+            <input type="password" id="confirmpassword" /><br /><br />
+            <input type="submit" id="submit" value="Submit" />
+        </div>
+    </div>
+</div>
+@section scripts{
+    <script type="text/javascript">
+        $(function () {
+           var  clearform=function() {
+                $('#email').val("");
+                $('#password').val("");
+                $('#confirmpassword').val("");
+            }
+            $('#submit').click(function (e) {
+                e.preventDefault();
+                var data = {
+                    Email: $('#email').val(),
+                    Password: $('#password').val(),
+                    ConfirmPassword: $('#confirmpassword').val()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/Account/Register',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(data)
+                }).success(function (data) {
+                    alert("You are registered");
+                    clearform();
+                }).fail(function (data) {                    
+                    var errors = data.responseJSON.ModelState;                   
+                    for (var key in errors) {                       
+                        alert("Error! " + errors[key][0]);
+                    }
+                    clearform();
+                });
+            });
+        })
+    </script>
+    <script type="text/javascript">
+        $(function () {
+           
+            var tokenKey = "tokenInfo";
+
+            var getToken = function () {
+                var tkn = sessionStorage.getItem(tokenKey);
+                if (tkn != null) {
+                    $('.userInfo').css('display', 'block');
+                    $('.loginForm').css('display', 'none');
+                    $('.registerFrom').css('display', 'none');
+                }
+            }
+
+            getToken();
+
+            $('#submitLogin').click(function (e) {
+                e.preventDefault();
+                var loginData = {
+                    grant_type: 'password',
+                    username: $('#emailLogin').val(),
+                    password: $('#passwordLogin').val()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Token',
+                    data: loginData
+                }).success(function (data) {
+                    $('.userName').text(data.userName);
+                    $('.userInfo').css('display', 'block');
+                    $('.loginForm').css('display', 'none');
+                    // сохраняем в хранилище sessionStorage токен доступа
+                    sessionStorage.setItem(tokenKey, data.access_token);
+                    console.log(data.access_token);
+                }).fail(function (data) {
+                    alert('При логине возникла ошибка');
+                });
+            });
+
+ 
+
+            $('#logOut').click(function (e) {
+                e.preventDefault();
+                sessionStorage.removeItem(tokenKey);
+            });
+        })
+    </script>
+}
